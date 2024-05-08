@@ -19,6 +19,16 @@
                 <label for="content">Content</label>
                 <textarea class="form-control" id="content" name="content" rows="5" required>{{ template.content }}</textarea>
             </div>
+            <div class="form-group">
+                <label for="tags">Tags</label>
+                <select multiple class="form-control" id="tags" name="tags">
+                    <option value="long-formal" {% if "long-formal" in template.tags %}selected{% endif %}>Long-Formal</option>
+                    <option value="short-formal" {% if "short-formal" in template.tags %}selected{% endif %}>Short-Formal</option>
+                    <option value="short-semiformal" {% if "short-semiformal" in template.tags %}selected{% endif %}>Short-Semiformal</option>
+                    <option value="short-friendly" {% if "short-friendly" in template.tags %}selected{% endif %}>Short-Friendly</option>
+                </select>
+            </div>
+            
             <button type="submit" class="btn btn-primary">Update</button>
             <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Back</a>
         </form>
