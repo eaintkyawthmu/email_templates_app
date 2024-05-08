@@ -109,4 +109,5 @@ ENV/
 env.bak/
 venv.bak/
 
-# Spyder project settings
+# Local draft data
+extra/
