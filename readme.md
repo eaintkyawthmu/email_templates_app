@@ -11,7 +11,7 @@ The Email Templates App is a Flask-based web application that allows users to ma
 ## Features
 
 - Create, edit, and delete email templates.
-- Preview email templates before sending.
+- Preview email templates before sending.   
 - Send emails using SMTP or other email service providers.
 - Customize email content with dynamic variables.
 - Track email delivery and open rates.

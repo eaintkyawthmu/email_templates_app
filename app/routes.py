@@ -1,43 +1,36 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash , jsonify
-
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from .models import TemplateManager
+from . import mongo
 
 main = Blueprint('main', __name__)
 
 @main.route('/')
-def index():
-    templates = TemplateManager.get_all_templates()
-    return render_template('index.html', templates=templates)
+@main.route('/page/<int:page>')
+def index(page=1, per_page=10):
+    total_items = mongo.db.templates.count_documents({})
+    total_pages = TemplateManager.calculate_total_pages(total_items, per_page)
+    templates = TemplateManager.get_all_templates(page, per_page)
+    return render_template('index.html', templates=templates, page=page, total_pages=total_pages)
 
 @main.route('/template/add', methods=['GET', 'POST'])
 def add_template():
     if request.method == 'POST':
         title = request.form.get('title')
         content = request.form.get('content')
-        tags = request.form.getlist('tags')  # Retrieve multiple select values
-        TemplateManager.add_template({'title': title, 'content': content, 'tags': tags})
-        flash('Template added successfully!')
+        tags = request.form.getlist('tags')
+        if TemplateManager.add_template({'title': title, 'content': content, 'tags': tags}):
+            flash('Template added successfully!')
+        else:
+            flash('Failed to add template.')
         return redirect(url_for('main.index'))
     return render_template('add_template.html')
-
-@main.route('/template/details/<template_id>')
-def template_details(template_id):
-    template = TemplateManager.get_template_by_id(template_id)
-    if template:
-        return jsonify({
-            'title': template['title'],
-            'content': template['content']
-        })
-    else:
-        return jsonify({'error': 'Template not found'}), 404
 
 @main.route('/template/edit/<template_id>', methods=['GET', 'POST'])
 def edit_template(template_id):
     if request.method == 'POST':
         title = request.form.get('title')
         content = request.form.get('content')
-        tags = request.form.getlist('tags')  # Assuming tags are also editable
-
+        tags = request.form.getlist('tags')
         if TemplateManager.update_template(template_id, {'title': title, 'content': content, 'tags': tags}):
             flash('Template updated successfully!')
         else:
@@ -45,34 +38,39 @@ def edit_template(template_id):
         return redirect(url_for('main.index'))
     else:
         template = TemplateManager.get_template_by_id(template_id)
-        if template is not None:
+        if template:
             return render_template('edit_template.html', template=template)
         else:
             flash('Template not found.')
             return redirect(url_for('main.index'))
 
-
 @main.route('/template/delete/<template_id>')
 def delete_template(template_id):
-    TemplateManager.delete_template(template_id)
-    flash('Template deleted successfully!')
+    if TemplateManager.delete_template(template_id):
+        flash('Template deleted successfully!')
+    else:
+        flash('Failed to delete template.')
     return redirect(url_for('main.index'))
-
-@main.route('/tags/<tag>')
-def filter_by_tag(tag):
-    templates = TemplateManager.get_templates_by_tag(tag)
-    if not templates:
-        flash(f"No templates found for tag: {tag}")
-    return render_template('index.html', templates=templates)
 
 @main.route('/search', methods=['GET'])
 def search_templates():
     query = request.args.get('search', '')
-    if query:
-        templates = TemplateManager.search_templates(query)
-        if not templates:
-            flash('No templates found matching your search criteria.')
-    else:
-        templates = TemplateManager.get_all_templates()
-    
-    return render_template('index.html', templates=templates)
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    total_items = mongo.db.templates.count_documents({"$text": {"$search": query}})
+    total_pages = TemplateManager.calculate_total_pages(total_items, per_page)
+    templates = TemplateManager.search_templates(query, page, per_page)
+    return render_template('index.html', templates=templates, page=page, total_pages=total_pages)
+
+@main.route('/tags/<tag>/page/<int:page>')
+def filter_by_tag(tag, page=1, per_page=10):
+    total_items = mongo.db.templates.count_documents({"tags": tag})
+    total_pages = TemplateManager.calculate_total_pages(total_items, per_page)
+    templates = TemplateManager.get_templates_by_tag(tag, page, per_page)
+    return render_template('index.html', templates=templates, page=page, total_pages=total_pages, tag=tag)
+# @main.route('/tags/<tag>/page/<int:page>')
+# def filter_by_tag(tag, page=1, per_page=10):
+#     total_items = mongo.db.templates.count_documents({"tags": tag})
+#     templates = TemplateManager.get_templates_by_tag(tag, page, per_page)# Your method to fetch data
+#     total_pages = TemplateManager.calculate_total_pages(total_items, per_page)
+#     return render_template('index.html', templates=templates, tag=tag, page=page, total_pages=total_pages)
