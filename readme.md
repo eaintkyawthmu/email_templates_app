@@ -6,7 +6,8 @@
 
 
 
-The Email Templates App is a Flask-based web application that allows users to manage and send email templates easily.
+The Email Templates App is a Flask-based web application that allows users to manage and copy email templates easily. 
+Database is NoSQL mongodb 
 
 ## Features
 
