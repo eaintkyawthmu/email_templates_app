@@ -68,11 +68,3 @@ def filter_by_tag(tag, page=1, per_page=10):
     total_pages = TemplateManager.calculate_total_pages(total_items, per_page)
     templates = TemplateManager.get_templates_by_tag(tag, page, per_page)
     return render_template('index.html', templates=templates, page=page, total_pages=total_pages, tag=tag)
-
-@main.route('/favicon.ico')
-def favicon():
-    try:
-        return current_app.send_static_file('favicon.ico')
-    except Exception as e:
-        logging.error(f"Error serving favicon: {e}")
-        abort(404)
