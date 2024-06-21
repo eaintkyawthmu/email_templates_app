@@ -1,13 +1,12 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from .models import TemplateManager
-from . import mongo
 
 main = Blueprint('main', __name__)
 
 @main.route('/')
 @main.route('/page/<int:page>')
 def index(page=1, per_page=10):
-    total_items = mongo.db.templates.count_documents({})
+    total_items = current_app.mongo.email_templates.templates.count_documents({})
     total_pages = TemplateManager.calculate_total_pages(total_items, per_page)
     templates = TemplateManager.get_all_templates(page, per_page)
     return render_template('index.html', templates=templates, page=page, total_pages=total_pages)
@@ -57,20 +56,14 @@ def search_templates():
     query = request.args.get('search', '')
     page = request.args.get('page', 1, type=int)
     per_page = 10
-    total_items = mongo.db.templates.count_documents({"$text": {"$search": query}})
+    total_items = current_app.mongo.email_templates.templates.count_documents({"$text": {"$search": query}})
     total_pages = TemplateManager.calculate_total_pages(total_items, per_page)
     templates = TemplateManager.search_templates(query, page, per_page)
     return render_template('index.html', templates=templates, page=page, total_pages=total_pages)
 
 @main.route('/tags/<tag>/page/<int:page>')
 def filter_by_tag(tag, page=1, per_page=10):
-    total_items = mongo.db.templates.count_documents({"tags": tag})
+    total_items = current_app.mongo.email_templates.templates.count_documents({"tags": tag})
     total_pages = TemplateManager.calculate_total_pages(total_items, per_page)
     templates = TemplateManager.get_templates_by_tag(tag, page, per_page)
     return render_template('index.html', templates=templates, page=page, total_pages=total_pages, tag=tag)
-# @main.route('/tags/<tag>/page/<int:page>')
-# def filter_by_tag(tag, page=1, per_page=10):
-#     total_items = mongo.db.templates.count_documents({"tags": tag})
-#     templates = TemplateManager.get_templates_by_tag(tag, page, per_page)# Your method to fetch data
-#     total_pages = TemplateManager.calculate_total_pages(total_items, per_page)
-#     return render_template('index.html', templates=templates, tag=tag, page=page, total_pages=total_pages)
